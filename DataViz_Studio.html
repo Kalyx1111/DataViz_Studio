@@ -1,0 +1,1609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DataViz Studio — By Aryan</title>
+
+<!-- External Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+
+<style>
+:root {
+  --navy: #0a0e1a;
+  --navy2: #0f1629;
+  --navy3: #141e35;
+  --gold: #c9a84c;
+  --gold2: #e8c96a;
+  --gold3: #f5e09a;
+  --cream: #faf8f2;
+  --glass: rgba(201,168,76,0.08);
+  --border: rgba(201,168,76,0.2);
+  --text: #e8e4d8;
+  --muted: rgba(232,228,216,0.5);
+  --accent1: #4a9eff;
+  --accent2: #ff6b9d;
+  --accent3: #00e5b4;
+  --accent4: #ff9f40;
+  --accent5: #9b59b6;
+  --r: 8px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--navy);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(201,168,76,0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(74,158,255,0.04) 0%, transparent 60%);
+}
+
+/* ══ HEADER ══ */
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 22px 40px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(10,14,26,0.95);
+  backdrop-filter: blur(20px);
+  position: sticky; top: 0; z-index: 100;
+}
+.logo { display: flex; align-items: center; gap: 14px; }
+.logo-icon {
+  width: 42px; height: 42px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--gold), var(--gold2));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; box-shadow: 0 0 20px rgba(201,168,76,0.3);
+}
+.logo-text { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; font-weight: 600; color: var(--gold2); letter-spacing: 0.03em; }
+.logo-sub { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; margin-top: -2px; }
+.header-badge { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--gold); border: 1px solid var(--border); padding: 4px 12px; border-radius: 20px; letter-spacing: 0.08em; }
+
+/* ══ LAYOUT ══ */
+.app {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  min-height: calc(100vh - 73px);
+}
+
+/* ══ SIDEBAR ══ */
+.sidebar {
+  background: var(--navy2);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 24px 0;
+}
+.sidebar-section { margin-bottom: 8px; }
+.sidebar-title {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+  color: var(--gold); letter-spacing: 0.15em; text-transform: uppercase;
+  padding: 6px 24px 10px; opacity: 0.8;
+}
+.chart-btn {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 10px 24px;
+  background: none; border: none; cursor: pointer;
+  color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.82rem;
+  text-align: left; transition: all 0.2s; border-left: 2px solid transparent;
+}
+.chart-btn:hover { background: var(--glass); color: var(--gold2); border-left-color: var(--gold); }
+.chart-btn.active { background: rgba(201,168,76,0.12); color: var(--gold2); border-left-color: var(--gold); font-weight: 500; }
+.chart-btn .icon { font-size: 1rem; width: 22px; text-align: center; }
+.chart-btn .tag {
+  margin-left: auto; font-size: 0.6rem; padding: 2px 6px; border-radius: 4px;
+  background: rgba(74,158,255,0.15); color: var(--accent1); font-family: 'JetBrains Mono', monospace;
+}
+.chart-btn .tag.t3d { background: rgba(0,229,180,0.12); color: var(--accent3); }
+.divider { height: 1px; background: var(--border); margin: 8px 16px; }
+
+/* ══ MAIN ══ */
+.main { display: flex; flex-direction: column; overflow: hidden; }
+
+/* ══ TOOLBAR ══ */
+.toolbar {
+  padding: 16px 32px; border-bottom: 1px solid var(--border);
+  background: rgba(15,22,41,0.8); display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+.toolbar h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 600; color: var(--gold2); flex: 1; min-width: 200px; }
+.btn {
+  padding: 9px 20px; border-radius: 6px; border: none; cursor: pointer;
+  font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 500;
+  transition: all 0.2s; letter-spacing: 0.03em;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--gold), var(--gold2));
+  color: var(--navy); box-shadow: 0 4px 15px rgba(201,168,76,0.25);
+}
+.btn-primary:hover { box-shadow: 0 6px 20px rgba(201,168,76,0.4); transform: translateY(-1px); }
+.btn-secondary {
+  background: var(--glass); border: 1px solid var(--border);
+  color: var(--gold2);
+}
+.btn-secondary:hover { background: rgba(201,168,76,0.15); }
+.btn-pdf {
+  background: linear-gradient(135deg, #e63946, #c1121f);
+  color: white; box-shadow: 0 4px 15px rgba(230,57,70,0.3);
+}
+.btn-pdf:hover { box-shadow: 0 6px 20px rgba(230,57,70,0.45); transform: translateY(-1px); }
+
+/* ══ WORKSPACE ══ */
+.workspace { display: flex; flex: 1; overflow: hidden; }
+
+/* ══ DATA PANEL ══ */
+.data-panel {
+  width: 340px; border-right: 1px solid var(--border);
+  background: var(--navy2); overflow-y: auto; padding: 24px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+.panel-label { font-size: 0.72rem; color: var(--gold); letter-spacing: 0.1em; text-transform: uppercase; font-family: 'JetBrains Mono', monospace; margin-bottom: 6px; }
+.input-group { display: flex; flex-direction: column; gap: 4px; }
+input[type="text"], textarea, select {
+  background: rgba(10,14,26,0.7); border: 1px solid var(--border);
+  color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.82rem;
+  padding: 9px 12px; border-radius: var(--r); width: 100%; outline: none;
+  transition: border-color 0.2s;
+}
+input[type="text"]:focus, textarea:focus, select:focus { border-color: var(--gold); }
+textarea { resize: vertical; min-height: 100px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
+select option { background: var(--navy2); }
+.hint { font-size: 0.68rem; color: var(--muted); line-height: 1.5; }
+.row-editor { display: flex; flex-direction: column; gap: 6px; }
+.row-item {
+  display: grid; grid-template-columns: 1fr 80px 28px; gap: 6px; align-items: center;
+}
+.row-item input { padding: 7px 10px; }
+.del-btn {
+  width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(255,100,100,0.3);
+  background: rgba(255,100,100,0.08); color: rgba(255,100,100,0.7); cursor: pointer;
+  font-size: 0.9rem; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.del-btn:hover { background: rgba(255,100,100,0.2); color: #ff6464; }
+.add-row-btn {
+  padding: 7px; border-radius: 6px; border: 1px dashed var(--border);
+  background: none; color: var(--muted); cursor: pointer; font-size: 0.78rem;
+  transition: all 0.2s; font-family: 'Inter', sans-serif;
+}
+.add-row-btn:hover { border-color: var(--gold); color: var(--gold2); }
+
+/* ══ CHART AREA ══ */
+.chart-area {
+  flex: 1; padding: 32px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 24px;
+  background: var(--navy);
+}
+.chart-container {
+  background: var(--navy2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 28px; position: relative;
+  box-shadow: 0 4px 30px rgba(0,0,0,0.3);
+}
+.chart-container h3 {
+  font-family: 'Cormorant Garamond', serif; font-size: 1.1rem;
+  color: var(--gold2); margin-bottom: 6px; font-weight: 600;
+}
+.chart-desc { font-size: 0.75rem; color: var(--muted); margin-bottom: 20px; }
+.chart-wrapper { width: 100%; position: relative; }
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 400px; gap: 16px;
+}
+.empty-icon { font-size: 4rem; opacity: 0.2; }
+.empty-title { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; color: var(--gold2); opacity: 0.5; }
+.empty-sub { font-size: 0.8rem; color: var(--muted); text-align: center; max-width: 300px; line-height: 1.6; }
+
+/* ══ 3D CANVAS ══ */
+.three-canvas { width: 100%; height: 460px; border-radius: 8px; overflow: hidden; }
+.three-canvas canvas { width: 100% !important; height: 100% !important; }
+
+/* ══ COLOR PALETTE PICKER ══ */
+.palette-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.palette-dot {
+  width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid transparent;
+  transition: transform 0.2s;
+}
+.palette-dot:hover, .palette-dot.active { border-color: white; transform: scale(1.2); }
+
+/* ══ LOADING ══ */
+.loading {
+  position: absolute; inset: 0; background: rgba(10,14,26,0.85);
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 12px; z-index: 10;
+}
+.spinner {
+  width: 36px; height: 36px; border: 3px solid var(--border);
+  border-top-color: var(--gold); border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ══ SCROLLBAR ══ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+/* ══ TOAST ══ */
+.toast {
+  position: fixed; bottom: 24px; right: 24px; z-index: 1000;
+  background: var(--navy3); border: 1px solid var(--border);
+  color: var(--gold2); padding: 12px 20px; border-radius: 8px;
+  font-size: 0.82rem; box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+  transform: translateY(80px); opacity: 0; transition: all 0.3s;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+
+/* ══ COLOR SCHEME SELECTOR ══ */
+.scheme-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+.scheme-card {
+  border: 1px solid var(--border); border-radius: 6px; padding: 8px 6px; cursor: pointer;
+  text-align: center; font-size: 0.65rem; color: var(--muted); transition: all 0.2s;
+  background: rgba(10,14,26,0.5);
+}
+.scheme-card:hover, .scheme-card.active { border-color: var(--gold); color: var(--gold2); background: var(--glass); }
+.scheme-dots { display: flex; gap: 3px; justify-content: center; margin-bottom: 4px; }
+.scheme-dot { width: 12px; height: 12px; border-radius: 50%; }
+
+.range-row { display: flex; align-items: center; gap: 10px; }
+input[type="range"] { flex: 1; accent-color: var(--gold); }
+.range-val { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--gold); min-width: 28px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">📊</div>
+    <div>
+      <div class="logo-text">DataViz Studio</div>
+      <div class="logo-sub">30 Chart Types · 2D & 3D · PDF Export</div>
+    </div>
+  </div>
+  <div class="header-badge">By Aryan · @EPureNest</div>
+</header>
+
+<div class="app">
+  <!-- ══ SIDEBAR ══ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-title">2D Charts</div>
+      <!-- 2D buttons injected by JS -->
+    </div>
+    <div class="divider"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">3D Charts</div>
+      <!-- 3D buttons injected by JS -->
+    </div>
+  </aside>
+
+  <!-- ══ MAIN ══ -->
+  <main class="main">
+    <div class="toolbar">
+      <h2 id="toolbar-title">Select a chart type to begin</h2>
+      <button class="btn btn-secondary" onclick="loadSampleData()">⚡ Sample Data</button>
+      <button class="btn btn-primary" onclick="generateChart()">▶ Generate Chart</button>
+      <button class="btn btn-pdf" onclick="exportPDF()">⬇ Export PDF</button>
+    </div>
+
+    <div class="workspace">
+      <!-- ══ DATA PANEL ══ -->
+      <div class="data-panel" id="data-panel">
+        <div class="empty-state" style="min-height:200px;">
+          <div style="font-size:2rem">←</div>
+          <div style="font-size:0.82rem; color:var(--muted); text-align:center;">Select a chart type from the sidebar to configure your data inputs</div>
+        </div>
+      </div>
+
+      <!-- ══ CHART AREA ══ -->
+      <div class="chart-area" id="chart-area">
+        <div class="empty-state">
+          <div class="empty-icon">📈</div>
+          <div class="empty-title">DataViz Studio</div>
+          <div class="empty-sub">Choose a chart type from the left panel, feed your data, and click Generate Chart to create stunning visualisations ready for PDF export.</div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  CHART REGISTRY
+// ═══════════════════════════════════════════════
+const CHARTS = [
+  // 2D
+  { id:'vbar',    name:'Vertical Bar Chart',     icon:'📊', tag:'2D', desc:'Compare values across categories with vertical columns.' },
+  { id:'hbar',    name:'Horizontal Bar Chart',   icon:'📉', tag:'2D', desc:'Horizontal bars — ideal for long category labels.' },
+  { id:'stacked', name:'Stacked Bar Chart',      icon:'🏗', tag:'2D', desc:'Show part-to-whole relationships stacked in bars.' },
+  { id:'cluster', name:'Clustered Bar Chart',    icon:'🗂', tag:'2D', desc:'Side-by-side bars for multi-series comparison.' },
+  { id:'pie',     name:'Pie Chart',              icon:'🥧', tag:'2D', desc:'Classic proportional breakdown of a whole.' },
+  { id:'donut',   name:'Donut Chart',            icon:'🍩', tag:'2D', desc:'Pie chart with a hole — modern and readable.' },
+  { id:'line',    name:'Line Chart',             icon:'📈', tag:'2D', desc:'Show trends over time or continuous data.' },
+  { id:'area',    name:'Area Chart',             icon:'🏔', tag:'2D', desc:'Filled line chart emphasising volume.' },
+  { id:'sarea',   name:'Stacked Area Chart',     icon:'🌊', tag:'2D', desc:'Stacked filled areas for cumulative series.' },
+  { id:'scatter', name:'Scatter Plot',           icon:'✦',  tag:'2D', desc:'Show correlation between two numeric variables.' },
+  { id:'bubble2', name:'2D Bubble Chart',        icon:'🫧',  tag:'2D', desc:'Scatter plot with a third dimension as bubble size.' },
+  { id:'hist',    name:'Histogram',              icon:'📶', tag:'2D', desc:'Frequency distribution of a dataset.' },
+  { id:'box',     name:'Box & Whisker Plot',     icon:'📦', tag:'2D', desc:'Statistical distribution: median, quartiles, outliers.' },
+  { id:'radar',   name:'Radar / Spider Chart',   icon:'🕷',  tag:'2D', desc:'Multi-axis comparison — ideal for profiles.' },
+  { id:'waterfall',name:'Waterfall Chart',       icon:'🌊', tag:'2D', desc:'Show running totals and incremental changes.' },
+  { id:'treemap', name:'Treemap',                icon:'🟥', tag:'2D', desc:'Hierarchical data as nested rectangles.' },
+  { id:'funnel',  name:'Funnel Chart',           icon:'🔽', tag:'2D', desc:'Show stages of a process or conversion pipeline.' },
+  { id:'gantt',   name:'Gantt Chart',            icon:'📅', tag:'2D', desc:'Project timeline with tasks and durations.' },
+  { id:'heatmap', name:'Heatmap',                icon:'🌡', tag:'2D', desc:'2D grid where colour intensity encodes values.' },
+  { id:'choropleth',name:'Choropleth Map',       icon:'🗺', tag:'2D', desc:'Geographic map shaded by data value.' },
+  { id:'sankey',  name:'Sankey Diagram',         icon:'↔',  tag:'2D', desc:'Flow diagram showing quantity between nodes — like the immigration chart.' },
+  // 3D
+  { id:'3dbar',   name:'3D Bar Chart',           icon:'🏛', tag:'3D', desc:'Three-dimensional bar chart rendered in WebGL.' },
+  { id:'3dpie',   name:'3D Pie Chart',           icon:'🎡', tag:'3D', desc:'Exploded 3D pie with depth and lighting.' },
+  { id:'3dribbon',name:'3D Ribbon Chart',        icon:'🎀', tag:'3D', desc:'3D version of area chart with ribbon thickness.' },
+  { id:'3dscatter',name:'3D Scatter Plot',       icon:'💫', tag:'3D', desc:'Three-axis scatter in full 3D space.' },
+  { id:'3dsurface',name:'3D Surface Chart',      icon:'⛰',  tag:'3D', desc:'Smooth mathematical surface over a 2D grid.' },
+  { id:'3dwire',  name:'3D Wireframe Chart',     icon:'🕸',  tag:'3D', desc:'Wireframe mesh — structural surface view.' },
+  { id:'3dwaterfall',name:'3D Waterfall Chart',  icon:'💧', tag:'3D', desc:'Waterfall chart extruded into the third dimension.' },
+  { id:'3dbubble',name:'3D Bubble Chart',        icon:'🫧',  tag:'3D', desc:'Bubbles positioned in full XYZ space.' },
+  { id:'3dglobe', name:'3D Geospatial Globe',    icon:'🌐', tag:'3D', desc:'Interactive rotating globe with data points.' },
+];
+
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+let state = {
+  activeChart: null,
+  chartInstance: null,
+  threeRenderer: null,
+  threeAnimId: null,
+  scheme: 'luxury',
+};
+
+const SCHEMES = {
+  luxury:   ['#c9a84c','#4a9eff','#ff6b9d','#00e5b4','#ff9f40','#9b59b6','#e74c3c','#2ecc71','#f39c12','#1abc9c'],
+  ocean:    ['#0077b6','#00b4d8','#90e0ef','#48cae4','#023e8a','#03045e','#0096c7','#ade8f4','#caf0f8','#0077b6'],
+  fire:     ['#e63946','#f4a261','#e9c46a','#f77f00','#d62828','#fcbf49','#ffd166','#ef233c','#e63946','#d90429'],
+  forest:   ['#2d6a4f','#52b788','#74c69d','#95d5b2','#b7e4c7','#1b4332','#40916c','#d8f3dc','#081c15','#52b788'],
+  cosmic:   ['#7400b8','#6930c3','#5e60ce','#5390d9','#4ea8de','#48bfe3','#56cfe1','#64dfdf','#72efdd','#80ffdb'],
+};
+
+// ═══════════════════════════════════════════════
+//  BUILD SIDEBAR
+// ═══════════════════════════════════════════════
+function buildSidebar() {
+  const sb = document.getElementById('sidebar');
+  const d2 = sb.querySelectorAll('.sidebar-section')[0];
+  const d3 = sb.querySelectorAll('.sidebar-section')[1];
+
+  CHARTS.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'chart-btn';
+    btn.id = 'btn-'+c.id;
+    btn.innerHTML = `<span class="icon">${c.icon}</span>${c.name}<span class="tag ${c.tag==='3D'?'t3d':''}">${c.tag}</span>`;
+    btn.onclick = () => selectChart(c.id);
+    (c.tag==='2D'?d2:d3).appendChild(btn);
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  SELECT CHART
+// ═══════════════════════════════════════════════
+function selectChart(id) {
+  state.activeChart = id;
+  document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn-'+id).classList.add('active');
+
+  const c = CHARTS.find(x=>x.id===id);
+  document.getElementById('toolbar-title').textContent = c.name;
+
+  buildDataPanel(id);
+  clearChart();
+}
+
+// ═══════════════════════════════════════════════
+//  DATA PANEL
+// ═══════════════════════════════════════════════
+function buildDataPanel(id) {
+  const panel = document.getElementById('data-panel');
+  panel.innerHTML = '';
+
+  // Common title
+  panel.innerHTML += `
+    <div class="input-group">
+      <div class="panel-label">Chart Title</div>
+      <input type="text" id="dp-title" placeholder="My Visualisation" value=""/>
+    </div>
+
+    <div class="input-group">
+      <div class="panel-label">Colour Scheme</div>
+      <div class="scheme-grid" id="scheme-grid"></div>
+    </div>
+  `;
+
+  // Chart-specific inputs
+  const extra = document.createElement('div');
+  extra.id = 'dp-extra';
+
+  if(['vbar','hbar','stacked','cluster','line','area','sarea','hist','waterfall','funnel'].includes(id)) {
+    extra.innerHTML = buildLabelValueEditor(id);
+  } else if(['pie','donut'].includes(id)) {
+    extra.innerHTML = buildLabelValueEditor(id);
+  } else if(['scatter','bubble2','3dscatter'].includes(id)) {
+    extra.innerHTML = buildXYZEditor(id);
+  } else if(id==='box') {
+    extra.innerHTML = buildBoxEditor();
+  } else if(id==='radar') {
+    extra.innerHTML = buildRadarEditor();
+  } else if(id==='treemap') {
+    extra.innerHTML = buildTreemapEditor();
+  } else if(id==='gantt') {
+    extra.innerHTML = buildGanttEditor();
+  } else if(id==='heatmap') {
+    extra.innerHTML = buildHeatmapEditor();
+  } else if(id==='sankey') {
+    extra.innerHTML = buildSankeyEditor();
+  } else if(id==='choropleth') {
+    extra.innerHTML = buildChoroplethEditor();
+  } else if(['3dbar','3dpie','3dribbon','3dwaterfall'].includes(id)) {
+    extra.innerHTML = buildLabelValueEditor(id);
+  } else if(id==='3dsurface'||id==='3dwire') {
+    extra.innerHTML = buildSurfaceEditor();
+  } else if(id==='3dbubble') {
+    extra.innerHTML = buildXYZEditor(id);
+  } else if(id==='3dglobe') {
+    extra.innerHTML = buildGlobeEditor();
+  } else {
+    extra.innerHTML = buildLabelValueEditor(id);
+  }
+
+  panel.appendChild(extra);
+  buildSchemeGrid();
+}
+
+function buildSchemeGrid() {
+  const g = document.getElementById('scheme-grid');
+  if(!g) return;
+  Object.entries(SCHEMES).forEach(([key, cols]) => {
+    const card = document.createElement('div');
+    card.className = 'scheme-card' + (key===state.scheme?' active':'');
+    card.innerHTML = `<div class="scheme-dots">${cols.slice(0,4).map(c=>`<div class="scheme-dot" style="background:${c}"></div>`).join('')}</div>${key}`;
+    card.onclick = () => { state.scheme = key; buildSchemeGrid(); };
+    g.appendChild(card);
+  });
+}
+
+function buildLabelValueEditor(id, multiSeries=false) {
+  const isMulti = ['stacked','cluster','sarea'].includes(id);
+  if(isMulti) {
+    return `
+      <div class="input-group">
+        <div class="panel-label">Series Labels (comma-separated)</div>
+        <input type="text" id="dp-series" placeholder="Series A, Series B, Series C"/>
+      </div>
+      <div class="input-group">
+        <div class="panel-label">Categories (one per line)</div>
+        <textarea id="dp-cats" placeholder="Q1&#10;Q2&#10;Q3&#10;Q4"></textarea>
+      </div>
+      <div class="input-group">
+        <div class="panel-label">Values per Series (comma per row, rows = categories)</div>
+        <textarea id="dp-multivals" placeholder="10,20,30&#10;15,25,35&#10;12,22,32&#10;18,28,38" style="min-height:120px;"></textarea>
+        <div class="hint">Each row = one category. Values separated by commas = series values.</div>
+      </div>
+    `;
+  }
+  return `
+    <div class="panel-label">Data Rows</div>
+    <div class="row-editor" id="row-editor"></div>
+    <button class="add-row-btn" onclick="addRow()">＋ Add Row</button>
+    ${['hist'].includes(id)?`<div class="hint" style="margin-top:6px;">For histogram, enter numeric values only (label is ignored).</div>`:''}
+    <script>initRows(5);<\/script>
+  `;
+}
+
+function buildXYZEditor(id) {
+  const has3 = ['bubble2','3dscatter','3dbubble'].includes(id);
+  const hasZ = ['3dscatter','3dbubble'].includes(id);
+  return `
+    <div class="panel-label">Data Points (X, Y${has3?', Size':''}${hasZ?', Z':''} · one per line)</div>
+    <textarea id="dp-xyz" placeholder="1, 2${has3?', 5':''}&#10;3, 4${has3?', 8':''}&#10;5, 1${has3?', 12':''}&#10;7, 6${has3?', 3':''}" style="min-height:140px;"></textarea>
+    <div class="hint">Separate values with commas. One data point per line.</div>
+    <div class="input-group" style="margin-top:8px;">
+      <div class="panel-label">X Axis Label</div>
+      <input type="text" id="dp-xlabel" placeholder="X Axis"/>
+    </div>
+    <div class="input-group">
+      <div class="panel-label">Y Axis Label</div>
+      <input type="text" id="dp-ylabel" placeholder="Y Axis"/>
+    </div>
+  `;
+}
+
+function buildBoxEditor() {
+  return `
+    <div class="panel-label">Datasets (one dataset per line — comma-separated numbers)</div>
+    <textarea id="dp-box" placeholder="12,15,14,20,22,18,25,30&#10;8,10,12,14,16,15,18,20&#10;5,8,11,14,17,20,23,26" style="min-height:140px;"></textarea>
+    <div class="hint">Each row is one box. At least 5 numbers per row.</div>
+    <div class="input-group" style="margin-top:8px;">
+      <div class="panel-label">Dataset Labels (comma-separated)</div>
+      <input type="text" id="dp-box-labels" placeholder="Group A, Group B, Group C"/>
+    </div>
+  `;
+}
+
+function buildRadarEditor() {
+  return `
+    <div class="input-group">
+      <div class="panel-label">Axes (comma-separated)</div>
+      <input type="text" id="dp-axes" placeholder="Speed, Strength, Intelligence, Agility, Stamina"/>
+    </div>
+    <div class="input-group">
+      <div class="panel-label">Series (one per line: Label: v1,v2,v3,...)</div>
+      <textarea id="dp-radar" placeholder="Hero A: 80,70,60,90,85&#10;Hero B: 60,90,75,65,70" style="min-height:100px;"></textarea>
+    </div>
+  `;
+}
+
+function buildTreemapEditor() {
+  return `
+    <div class="panel-label">Items (Name, Value · one per line)</div>
+    <textarea id="dp-tree" placeholder="Technology, 450&#10;Finance, 380&#10;Healthcare, 290&#10;Energy, 220&#10;Consumer, 180&#10;Industrials, 150" style="min-height:140px;"></textarea>
+    <div class="hint">Optional: use Name/Group, Value to nest.</div>
+  `;
+}
+
+function buildGanttEditor() {
+  return `
+    <div class="panel-label">Tasks (Name, Start Day, End Day · one per line)</div>
+    <textarea id="dp-gantt" placeholder="Planning, 0, 5&#10;Design, 3, 10&#10;Development, 8, 25&#10;Testing, 22, 30&#10;Deployment, 28, 35" style="min-height:120px;"></textarea>
+    <div class="input-group" style="margin-top:8px;">
+      <div class="panel-label">Project Name</div>
+      <input type="text" id="dp-project" placeholder="Project Timeline"/>
+    </div>
+  `;
+}
+
+function buildHeatmapEditor() {
+  return `
+    <div class="panel-label">Row Labels (comma-separated)</div>
+    <input type="text" id="dp-rows" placeholder="Mon, Tue, Wed, Thu, Fri"/>
+    <div class="panel-label" style="margin-top:10px;">Column Labels (comma-separated)</div>
+    <input type="text" id="dp-cols" placeholder="9am, 10am, 11am, 12pm, 1pm, 2pm"/>
+    <div class="panel-label" style="margin-top:10px;">Values (rows of comma-separated numbers)</div>
+    <textarea id="dp-heat" placeholder="20,45,67,80,55,40&#10;35,60,72,85,68,50&#10;15,40,55,70,45,30&#10;42,68,80,90,75,60&#10;25,50,65,78,55,35" style="min-height:120px;"></textarea>
+  `;
+}
+
+function buildSankeyEditor() {
+  return `
+    <div class="panel-label">Flows (Source, Target, Value · one per line)</div>
+    <textarea id="dp-sankey" placeholder="Mexico, US Immigrants, 11000000&#10;India, US Immigrants, 3200000&#10;China, US Immigrants, 2500000&#10;Philippines, US Immigrants, 2000000&#10;El Salvador, US Immigrants, 1400000&#10;US Immigrants, California, 5000000&#10;US Immigrants, Texas, 4500000&#10;US Immigrants, New York, 3200000&#10;US Immigrants, Florida, 2800000" style="min-height:160px;"></textarea>
+    <div class="hint">Each row defines one flow arrow. Values represent flow quantity.</div>
+  `;
+}
+
+function buildChoroplethEditor() {
+  return `
+    <div class="hint" style="padding:12px; border:1px solid var(--border); border-radius:8px; margin-bottom:10px;">
+      ℹ Choropleth uses a simplified world map. Enter ISO-2 country codes and values.
+    </div>
+    <div class="panel-label">Country Data (ISO2 Code, Value · one per line)</div>
+    <textarea id="dp-choropleth" placeholder="US, 100&#10;CN, 85&#10;IN, 75&#10;BR, 60&#10;RU, 55&#10;DE, 50&#10;GB, 48&#10;FR, 45&#10;JP, 70&#10;AU, 40" style="min-height:140px;"></textarea>
+    <div class="input-group" style="margin-top:8px;">
+      <div class="panel-label">Value Label</div>
+      <input type="text" id="dp-val-label" placeholder="GDP Index"/>
+    </div>
+  `;
+}
+
+function buildSurfaceEditor() {
+  return `
+    <div class="hint" style="padding:12px; border:1px solid var(--border); border-radius:8px; margin-bottom:10px;">
+      ℹ Surface chart uses a mathematical function Z = f(X,Y). Enter the function or a grid.
+    </div>
+    <div class="input-group">
+      <div class="panel-label">Function (use x and y)</div>
+      <input type="text" id="dp-fn" placeholder="Math.sin(x) * Math.cos(y) * 2"/>
+    </div>
+    <div class="input-group">
+      <div class="panel-label">Grid Resolution</div>
+      <div class="range-row">
+        <input type="range" id="dp-res" min="10" max="50" value="25" oninput="document.getElementById('res-val').textContent=this.value"/>
+        <span class="range-val" id="res-val">25</span>
+      </div>
+    </div>
+    <div class="input-group">
+      <div class="panel-label">X/Y Range</div>
+      <input type="text" id="dp-range" placeholder="-3, 3"/>
+    </div>
+  `;
+}
+
+function buildGlobeEditor() {
+  return `
+    <div class="panel-label">Points (Lat, Lon, Label, Value · one per line)</div>
+    <textarea id="dp-globe" placeholder="37.7, -122.4, San Francisco, 80&#10;51.5, -0.1, London, 75&#10;35.7, 139.7, Tokyo, 90&#10;-33.9, 151.2, Sydney, 65&#10;48.9, 2.3, Paris, 70&#10;19.1, 72.9, Mumbai, 85&#10;55.8, 37.6, Moscow, 50&#10;-23.5, -46.6, São Paulo, 60" style="min-height:160px;"></textarea>
+    <div class="hint">Latitude and Longitude in decimal degrees.</div>
+  `;
+}
+
+// ═══════════════════════════════════════════════
+//  ROW EDITOR
+// ═══════════════════════════════════════════════
+function initRows(n=4) {
+  const container = document.getElementById('row-editor');
+  if(!container) return;
+  for(let i=0;i<n;i++) addRow();
+}
+
+function addRow() {
+  const container = document.getElementById('row-editor');
+  if(!container) return;
+  const idx = container.children.length;
+  const div = document.createElement('div');
+  div.className = 'row-item';
+  div.dataset.idx = idx;
+  div.innerHTML = `
+    <input type="text" class="row-label" placeholder="Label ${idx+1}"/>
+    <input type="text" class="row-val" placeholder="Value"/>
+    <button class="del-btn" onclick="this.parentElement.remove()">✕</button>
+  `;
+  container.appendChild(div);
+}
+
+function getRows() {
+  const labels=[], values=[];
+  document.querySelectorAll('#row-editor .row-item').forEach(r => {
+    const l = r.querySelector('.row-label').value.trim();
+    const v = parseFloat(r.querySelector('.row-val').value)||0;
+    if(l||v) { labels.push(l||'—'); values.push(v); }
+  });
+  return {labels, values};
+}
+
+// ═══════════════════════════════════════════════
+//  SAMPLE DATA
+// ═══════════════════════════════════════════════
+const SAMPLES = {
+  vbar:     { title:'Regional Revenue 2025', labels:['Asia','Europe','Americas','Africa','Oceania'], values:[420,310,550,180,140] },
+  hbar:     { title:'Top Programming Languages', labels:['Python','JavaScript','TypeScript','Rust','Go','Java','C++'], values:[68,62,55,40,38,45,42] },
+  stacked:  { title:'Quarterly Performance', series:'Sales,Operations,R&D', cats:'Q1\nQ2\nQ3\nQ4', vals:'40,20,10\n45,25,12\n50,22,15\n55,30,18' },
+  cluster:  { title:'Product Comparison', series:'2023,2024,2025', cats:'Product A\nProduct B\nProduct C\nProduct D', vals:'30,40,35\n35,45,40\n28,38,30\n42,52,48' },
+  pie:      { title:'Market Share', labels:['Company A','Company B','Company C','Company D','Others'], values:[35,25,18,12,10] },
+  donut:    { title:'Budget Allocation', labels:['Personnel','Technology','Marketing','Operations','R&D'], values:[45,20,15,12,8] },
+  line:     { title:'Stock Price Trend', labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], values:[120,132,101,134,160,185,142,165,178,195,188,210] },
+  area:     { title:'Monthly Active Users', labels:['Jan','Feb','Mar','Apr','May','Jun'], values:[4200,5800,7200,6800,9100,11200] },
+  sarea:    { title:'Traffic Sources', series:'Organic,Direct,Referral', cats:'Jan\nFeb\nMar\nApr\nMay\nJun', vals:'4000,2000,1000\n4500,2200,1100\n5000,2500,1200\n5500,2800,1400\n6000,3000,1500\n6500,3200,1600' },
+  scatter:  { xyz:'2,4\n3,7\n5,11\n6,14\n8,18\n10,22\n12,25\n14,29\n16,32\n18,36' },
+  bubble2:  { xyz:'10,20,15\n20,35,25\n30,15,35\n40,50,10\n50,30,45\n60,45,20\n70,25,30' },
+  hist:     { title:'Score Distribution', labels:['10','25','32','45','52','60','68','71','78','82','85','88','90','92','95'], values:[10,25,32,45,52,60,68,71,78,82,85,88,90,92,95] },
+  box:      { box:'15,20,35,40,50,60,70,80,90\n10,15,25,30,40,45,55,65,75\n5,10,20,30,35,45,50,60,70', labels:'Group A,Group B,Group C' },
+  radar:    { axes:'Speed,Power,Defence,Agility,Intelligence', radar:'Team Alpha: 80,70,60,90,75\nTeam Beta: 65,85,75,55,80\nTeam Gamma: 70,60,85,80,70' },
+  waterfall:{ title:'P&L Statement', labels:['Revenue','COGS','Gross Profit','OpEx','EBITDA','D&A','EBIT'], values:[500,-200,300,-120,180,-30,150] },
+  treemap:  { tree:'Technology,450\nFinance,380\nHealthcare,290\nEnergy,220\nConsumer,180\nIndustrials,150\nMaterials,120\nUtilities,100' },
+  funnel:   { title:'Sales Funnel', labels:['Leads','Prospects','Qualified','Proposals','Negotiations','Closed'], values:[10000,6500,3200,1800,900,420] },
+  gantt:    { gantt:'Discovery,0,5\nDesign Sprint,4,12\nDevelopment,10,28\nTesting & QA,24,34\nDeployment,32,38\nMonitoring,36,42', project:'Product Launch 2025' },
+  heatmap:  { rows:'Mon,Tue,Wed,Thu,Fri', cols:'9am,10am,11am,12pm,1pm,2pm,3pm', heat:'20,45,67,80,55,40,60\n35,60,72,85,68,50,72\n15,40,55,70,45,30,55\n42,68,80,90,75,60,78\n25,50,65,78,55,35,62' },
+  choropleth:{ choropleth:'US,100\nCN,85\nIN,75\nBR,60\nRU,55\nDE,50\nGB,48\nFR,45\nJP,70\nAU,40\nCA,52\nMX,38\nKR,65\nID,42\nSA,35', valLabel:'Economic Index' },
+  sankey:   { sankey:'Mexico,US Immigrants,11000000\nIndia,US Immigrants,3200000\nChina,US Immigrants,2500000\nPhilippines,US Immigrants,2000000\nEl Salvador,US Immigrants,1400000\nUS Immigrants,California,8000000\nUS Immigrants,Texas,5500000\nUS Immigrants,New York,4200000\nUS Immigrants,Florida,3600000\nUS Immigrants,Other States,6400000' },
+  '3dbar':  { title:'3D Revenue by Region', labels:['Asia','Europe','Americas','Africa','Oceania'], values:[420,310,550,180,140] },
+  '3dpie':  { title:'3D Market Share', labels:['Alpha','Beta','Gamma','Delta','Epsilon'], values:[35,25,18,12,10] },
+  '3dribbon':{ title:'3D Growth Trend', labels:['Q1','Q2','Q3','Q4','Q5','Q6'], values:[120,145,160,135,175,200] },
+  '3dscatter':{ xyz:'1,2,3\n4,5,6\n2,8,4\n7,3,9\n5,6,2\n8,1,7\n3,9,5\n6,4,8\n9,7,1\n2,5,8' },
+  '3dsurface':{ fn:'Math.sin(x)*Math.cos(y)*2', res:25, range:'-3,3' },
+  '3dwire':   { fn:'Math.sin(Math.sqrt(x*x+y*y))', res:30, range:'-4,4' },
+  '3dwaterfall':{ title:'3D Financial Flow', labels:['Revenue','COGS','Gross','OpEx','Net'], values:[500,-200,300,-120,180] },
+  '3dbubble': { xyz:'2,3,5\n5,8,12\n8,2,8\n12,10,20\n15,6,15\n18,14,10\n22,5,18\n25,18,25' },
+  '3dglobe':  { globe:'37.7,-122.4,San Francisco,80\n51.5,-0.1,London,75\n35.7,139.7,Tokyo,90\n-33.9,151.2,Sydney,65\n48.9,2.3,Paris,70\n19.1,72.9,Mumbai,85\n55.8,37.6,Moscow,50\n-23.5,-46.6,São Paulo,60\n31.2,121.5,Shanghai,88\n40.7,-74.0,New York,95' },
+};
+
+function loadSampleData() {
+  if(!state.activeChart) { toast('Select a chart type first'); return; }
+  const id = state.activeChart;
+  const s = SAMPLES[id]; if(!s) return;
+
+  if(document.getElementById('dp-title')) document.getElementById('dp-title').value = s.title||'Sample Data';
+
+  // Row editor charts
+  if(s.labels && document.getElementById('row-editor')) {
+    document.getElementById('row-editor').innerHTML='';
+    s.labels.forEach((l,i)=>{
+      addRow();
+      const items = document.querySelectorAll('#row-editor .row-item');
+      items[items.length-1].querySelector('.row-label').value=l;
+      items[items.length-1].querySelector('.row-val').value=s.values[i];
+    });
+  }
+
+  // Multi-series
+  if(s.series && document.getElementById('dp-series')) {
+    document.getElementById('dp-series').value = s.series;
+    document.getElementById('dp-cats').value = s.cats||'';
+    document.getElementById('dp-multivals').value = s.vals||'';
+  }
+
+  // XYZ
+  if(s.xyz && document.getElementById('dp-xyz')) document.getElementById('dp-xyz').value = s.xyz;
+
+  // Box
+  if(s.box && document.getElementById('dp-box')) {
+    document.getElementById('dp-box').value = s.box;
+    document.getElementById('dp-box-labels').value = s.labels||'';
+  }
+
+  // Radar
+  if(s.axes && document.getElementById('dp-axes')) {
+    document.getElementById('dp-axes').value = s.axes;
+    document.getElementById('dp-radar').value = s.radar||'';
+  }
+
+  // Gantt
+  if(s.gantt && document.getElementById('dp-gantt')) {
+    document.getElementById('dp-gantt').value = s.gantt;
+    if(document.getElementById('dp-project')) document.getElementById('dp-project').value = s.project||'';
+  }
+
+  // Heatmap
+  if(s.rows && document.getElementById('dp-rows')) {
+    document.getElementById('dp-rows').value = s.rows;
+    document.getElementById('dp-cols').value = s.cols;
+    document.getElementById('dp-heat').value = s.heat;
+  }
+
+  // Sankey
+  if(s.sankey && document.getElementById('dp-sankey')) document.getElementById('dp-sankey').value = s.sankey;
+
+  // Treemap
+  if(s.tree && document.getElementById('dp-tree')) document.getElementById('dp-tree').value = s.tree;
+
+  // Funnel
+  if(s.labels && document.getElementById('row-editor') && id==='funnel') {
+    document.getElementById('row-editor').innerHTML='';
+    s.labels.forEach((l,i)=>{
+      addRow();
+      const items = document.querySelectorAll('#row-editor .row-item');
+      items[items.length-1].querySelector('.row-label').value=l;
+      items[items.length-1].querySelector('.row-val').value=s.values[i];
+    });
+  }
+
+  // Choropleth
+  if(s.choropleth && document.getElementById('dp-choropleth')) {
+    document.getElementById('dp-choropleth').value = s.choropleth;
+    if(document.getElementById('dp-val-label')) document.getElementById('dp-val-label').value = s.valLabel||'';
+  }
+
+  // Surface
+  if(s.fn && document.getElementById('dp-fn')) {
+    document.getElementById('dp-fn').value = s.fn;
+    if(document.getElementById('dp-range')) document.getElementById('dp-range').value = s.range;
+  }
+
+  // Globe
+  if(s.globe && document.getElementById('dp-globe')) document.getElementById('dp-globe').value = s.globe;
+
+  toast('✦ Sample data loaded');
+}
+
+// ═══════════════════════════════════════════════
+//  COLOUR HELPERS
+// ═══════════════════════════════════════════════
+function getColors(n) {
+  const pal = SCHEMES[state.scheme];
+  const out = [];
+  for(let i=0;i<n;i++) out.push(pal[i%pal.length]);
+  return out;
+}
+
+function hexToRgb(hex) {
+  const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return r ? { r:parseInt(r[1],16), g:parseInt(r[2],16), b:parseInt(r[3],16) } : {r:100,g:100,b:100};
+}
+
+function hexToRgba(hex, a) {
+  const c = hexToRgb(hex);
+  return `rgba(${c.r},${c.g},${c.b},${a})`;
+}
+
+// ═══════════════════════════════════════════════
+//  GENERATE CHART
+// ═══════════════════════════════════════════════
+function clearChart() {
+  if(state.chartInstance) { state.chartInstance.destroy(); state.chartInstance=null; }
+  if(state.threeRenderer) { state.threeRenderer.dispose(); state.threeRenderer=null; }
+  if(state.threeAnimId) { cancelAnimationFrame(state.threeAnimId); state.threeAnimId=null; }
+  document.getElementById('chart-area').innerHTML='';
+}
+
+function generateChart() {
+  if(!state.activeChart) { toast('Select a chart type first'); return; }
+  clearChart();
+
+  const id = state.activeChart;
+  const title = (document.getElementById('dp-title')||{}).value || CHARTS.find(c=>c.id===id).name;
+  const desc = CHARTS.find(c=>c.id===id).desc;
+
+  const area = document.getElementById('chart-area');
+  const container = document.createElement('div');
+  container.className = 'chart-container';
+  container.id = 'export-target';
+  container.innerHTML = `<h3>${title}</h3><div class="chart-desc">${desc}</div><div class="chart-wrapper" id="cw"></div>`;
+  area.appendChild(container);
+
+  try {
+    const dispatch = {
+      vbar: render2DBar, hbar: render2DBar, stacked: renderMultiBar, cluster: renderMultiBar,
+      pie: renderPieDonut, donut: renderPieDonut,
+      line: renderLine, area: renderArea, sarea: renderStackedArea,
+      scatter: renderScatter, bubble2: renderBubble,
+      hist: renderHistogram, box: renderBox,
+      radar: renderRadar, waterfall: renderWaterfall,
+      treemap: renderTreemap, funnel: renderFunnel, gantt: renderGantt,
+      heatmap: renderHeatmap, choropleth: renderChoropleth, sankey: renderSankey,
+      '3dbar': render3DBar, '3dpie': render3DPie, '3dribbon': render3DRibbon,
+      '3dscatter': render3DScatter, '3dsurface': render3DSurface, '3dwire': render3DWireframe,
+      '3dwaterfall': render3DWaterfall, '3dbubble': render3DBubble, '3dglobe': render3DGlobe,
+    };
+    dispatch[id](container.querySelector('#cw'), id);
+    toast('✦ Chart generated');
+  } catch(e) {
+    container.querySelector('#cw').innerHTML = `<div style="color:#ff6b6b;padding:20px;">Error: ${e.message}</div>`;
+    console.error(e);
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  2D CHART RENDERERS (Chart.js)
+// ═══════════════════════════════════════════════
+function makeCanvas(cw, h=380) {
+  cw.innerHTML = `<canvas id="cvs" style="max-height:${h}px;"></canvas>`;
+  return document.getElementById('cvs').getContext('2d');
+}
+
+const CHART_DEFAULTS = {
+  plugins: { legend: { labels: { color:'#e8e4d8', font:{family:'Inter',size:11} } } },
+  scales: {
+    x: { grid:{color:'rgba(201,168,76,0.08)'}, ticks:{color:'#e8e4d8',font:{family:'Inter',size:11}} },
+    y: { grid:{color:'rgba(201,168,76,0.08)'}, ticks:{color:'#e8e4d8',font:{family:'Inter',size:11}} }
+  }
+};
+
+function render2DBar(cw, id) {
+  const {labels, values} = getRows();
+  const colors = getColors(values.length);
+  const ctx = makeCanvas(cw);
+  const type = id==='hbar'?'bar':'bar';
+  state.chartInstance = new Chart(ctx, {
+    type,
+    data: { labels, datasets:[{ label:'Value', data:values, backgroundColor:colors.map(c=>hexToRgba(c,0.8)), borderColor:colors, borderWidth:1.5, borderRadius:4 }] },
+    options: {
+      indexAxis: id==='hbar'?'y':'x',
+      responsive:true, ...CHART_DEFAULTS,
+      plugins: { ...CHART_DEFAULTS.plugins }
+    }
+  });
+}
+
+function renderMultiBar(cw, id) {
+  const seriesRaw = (document.getElementById('dp-series')||{}).value||'';
+  const catsRaw = (document.getElementById('dp-cats')||{}).value||'';
+  const valsRaw = (document.getElementById('dp-multivals')||{}).value||'';
+  const seriesLabels = seriesRaw.split(',').map(s=>s.trim());
+  const cats = catsRaw.split('\n').map(s=>s.trim()).filter(Boolean);
+  const rows = valsRaw.split('\n').map(r=>r.split(',').map(v=>parseFloat(v.trim())||0));
+  const colors = getColors(seriesLabels.length);
+  const datasets = seriesLabels.map((name,si) => ({
+    label:name, data:rows.map(r=>r[si]||0),
+    backgroundColor: hexToRgba(colors[si], id==='stacked'?0.7:0.75),
+    borderColor: colors[si], borderWidth:1.5, borderRadius:3
+  }));
+  const ctx = makeCanvas(cw);
+  state.chartInstance = new Chart(ctx, {
+    type:'bar',
+    data:{ labels:cats, datasets },
+    options:{ responsive:true, ...CHART_DEFAULTS, plugins:{...CHART_DEFAULTS.plugins}, stacked:id==='stacked',
+      scales:{...CHART_DEFAULTS.scales, x:{...CHART_DEFAULTS.scales.x, stacked:id==='stacked'}, y:{...CHART_DEFAULTS.scales.y, stacked:id==='stacked'}} }
+  });
+}
+
+function renderPieDonut(cw, id) {
+  const {labels, values} = getRows();
+  const colors = getColors(values.length);
+  const ctx = makeCanvas(cw, 380);
+  state.chartInstance = new Chart(ctx, {
+    type: id==='donut'?'doughnut':'pie',
+    data:{ labels, datasets:[{ data:values, backgroundColor:colors.map(c=>hexToRgba(c,0.85)), borderColor:'#0f1629', borderWidth:2 }] },
+    options:{ responsive:true, plugins:{...CHART_DEFAULTS.plugins, legend:{...CHART_DEFAULTS.plugins.legend, position:'right'}} }
+  });
+}
+
+function renderLine(cw, id) {
+  const {labels, values} = getRows();
+  const color = getColors(1)[0];
+  const ctx = makeCanvas(cw);
+  state.chartInstance = new Chart(ctx, {
+    type:'line',
+    data:{ labels, datasets:[{ label:'Value', data:values, borderColor:color, backgroundColor:hexToRgba(color,0.1), fill:false, tension:0.4, pointBackgroundColor:color, pointRadius:4 }] },
+    options:{ responsive:true, ...CHART_DEFAULTS }
+  });
+}
+
+function renderArea(cw) {
+  const {labels, values} = getRows();
+  const color = getColors(1)[0];
+  const ctx = makeCanvas(cw);
+  state.chartInstance = new Chart(ctx, {
+    type:'line',
+    data:{ labels, datasets:[{ label:'Value', data:values, borderColor:color, backgroundColor:hexToRgba(color,0.3), fill:true, tension:0.4 }] },
+    options:{ responsive:true, ...CHART_DEFAULTS }
+  });
+}
+
+function renderStackedArea(cw) {
+  const seriesRaw = (document.getElementById('dp-series')||{}).value||'';
+  const catsRaw = (document.getElementById('dp-cats')||{}).value||'';
+  const valsRaw = (document.getElementById('dp-multivals')||{}).value||'';
+  const seriesLabels = seriesRaw.split(',').map(s=>s.trim());
+  const cats = catsRaw.split('\n').map(s=>s.trim()).filter(Boolean);
+  const rows = valsRaw.split('\n').map(r=>r.split(',').map(v=>parseFloat(v.trim())||0));
+  const colors = getColors(seriesLabels.length);
+  const datasets = seriesLabels.map((name,si) => ({
+    label:name, data:rows.map(r=>r[si]||0),
+    borderColor:colors[si], backgroundColor:hexToRgba(colors[si],0.4),
+    fill:true, tension:0.4
+  }));
+  const ctx = makeCanvas(cw);
+  state.chartInstance = new Chart(ctx, {
+    type:'line', data:{labels:cats, datasets},
+    options:{ responsive:true, ...CHART_DEFAULTS,
+      scales:{...CHART_DEFAULTS.scales, y:{...CHART_DEFAULTS.scales.y, stacked:true}} }
+  });
+}
+
+function renderScatter(cw) {
+  const raw = (document.getElementById('dp-xyz')||{}).value||'';
+  const points = raw.split('\n').map(r=>{ const p=r.split(','); return {x:parseFloat(p[0]),y:parseFloat(p[1])}; }).filter(p=>!isNaN(p.x));
+  const color = getColors(1)[0];
+  const ctx = makeCanvas(cw);
+  state.chartInstance = new Chart(ctx, {
+    type:'scatter',
+    data:{ datasets:[{ label:'Data', data:points, backgroundColor:hexToRgba(color,0.7), pointRadius:7, pointHoverRadius:9 }] },
+    options:{ responsive:true, ...CHART_DEFAULTS }
+  });
+}
+
+function renderBubble(cw) {
+  const raw = (document.getElementById('dp-xyz')||{}).value||'';
+  const points = raw.split('\n').map(r=>{ const p=r.split(','); return {x:parseFloat(p[0]),y:parseFloat(p[1]),r:Math.max(3,parseFloat(p[2])/5)||8}; }).filter(p=>!isNaN(p.x));
+  const colors = getColors(points.length);
+  const ctx = makeCanvas(cw);
+  state.chartInstance = new Chart(ctx, {
+    type:'bubble',
+    data:{ datasets:[{ label:'Bubble', data:points, backgroundColor:points.map((_,i)=>hexToRgba(colors[i],0.7)), borderColor:colors }] },
+    options:{ responsive:true, ...CHART_DEFAULTS }
+  });
+}
+
+function renderHistogram(cw) {
+  const {values} = getRows();
+  const color = getColors(1)[0];
+  const ctx = makeCanvas(cw);
+  const minV=Math.min(...values), maxV=Math.max(...values);
+  const bins=10, binSize=(maxV-minV)/bins;
+  const freqs = Array(bins).fill(0);
+  values.forEach(v=>{ const bi=Math.min(Math.floor((v-minV)/binSize),bins-1); freqs[bi]++; });
+  const labels = Array.from({length:bins},(_,i)=>(minV+i*binSize).toFixed(1));
+  state.chartInstance = new Chart(ctx, {
+    type:'bar',
+    data:{ labels, datasets:[{ label:'Frequency', data:freqs, backgroundColor:hexToRgba(color,0.8), borderColor:color, borderWidth:1 }] },
+    options:{ responsive:true, ...CHART_DEFAULTS, plugins:{...CHART_DEFAULTS.plugins, legend:{display:false}} }
+  });
+}
+
+function renderBox(cw) {
+  const raw = (document.getElementById('dp-box')||{}).value||'';
+  const labsRaw = (document.getElementById('dp-box-labels')||{}).value||'';
+  const datasets = raw.split('\n').filter(Boolean).map((row, i) => {
+    const vals = row.split(',').map(v=>parseFloat(v.trim())).filter(v=>!isNaN(v)).sort((a,b)=>a-b);
+    const n=vals.length, q1=vals[Math.floor(n/4)], median=vals[Math.floor(n/2)], q3=vals[Math.floor(3*n/4)];
+    const iqr=q3-q1, min=Math.max(vals[0],q1-1.5*iqr), max=Math.min(vals[n-1],q3+1.5*iqr);
+    return {min, q1, median, q3, max};
+  });
+  const labels = labsRaw ? labsRaw.split(',').map(s=>s.trim()) : datasets.map((_,i)=>`Group ${i+1}`);
+  const colors = getColors(datasets.length);
+
+  cw.innerHTML = `<canvas id="cvs" style="max-height:380px;"></canvas>`;
+  const ctx = document.getElementById('cvs').getContext('2d');
+  // Render box plots manually using Chart.js bar chart simulation
+  state.chartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: datasets.map((d,i) => ({
+        label: labels[i],
+        data: [d.median],
+        backgroundColor: hexToRgba(colors[i], 0.5),
+        borderColor: colors[i],
+        borderWidth: 2,
+        barThickness: 40,
+      }))
+    },
+    options: {
+      responsive:true,
+      plugins: {
+        ...CHART_DEFAULTS.plugins,
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const d = datasets[ctx.datasetIndex];
+              return [`Min: ${d.min}`, `Q1: ${d.q1}`, `Median: ${d.median}`, `Q3: ${d.q3}`, `Max: ${d.max}`];
+            }
+          }
+        }
+      },
+      scales: CHART_DEFAULTS.scales
+    }
+  });
+
+  // Draw whiskers overlay
+  const cvsEl = document.getElementById('cvs');
+  const drawWhiskers = () => {
+    const chart = state.chartInstance;
+    const ctx2 = cvsEl.getContext('2d');
+    datasets.forEach((d,i) => {
+      const meta = chart.getDatasetMeta(i);
+      if(!meta.data[0]) return;
+      const bar = meta.data[0];
+      const x = bar.x, w = bar.width;
+      const yScale = chart.scales.y;
+      const yMin = yScale.getPixelForValue(d.min);
+      const yMax = yScale.getPixelForValue(d.max);
+      const yQ1 = yScale.getPixelForValue(d.q1);
+      const yQ3 = yScale.getPixelForValue(d.q3);
+      ctx2.save();
+      ctx2.strokeStyle = colors[i]; ctx2.lineWidth = 1.5;
+      // Whisker lines
+      ctx2.beginPath(); ctx2.moveTo(x,yMin); ctx2.lineTo(x,yQ1); ctx2.stroke();
+      ctx2.beginPath(); ctx2.moveTo(x,yMax); ctx2.lineTo(x,yQ3); ctx2.stroke();
+      // Whisker caps
+      ctx2.beginPath(); ctx2.moveTo(x-w/4,yMin); ctx2.lineTo(x+w/4,yMin); ctx2.stroke();
+      ctx2.beginPath(); ctx2.moveTo(x-w/4,yMax); ctx2.lineTo(x+w/4,yMax); ctx2.stroke();
+      // Box
+      ctx2.fillStyle = hexToRgba(colors[i],0.2);
+      ctx2.fillRect(x-w/2, yQ3, w, yQ1-yQ3);
+      ctx2.strokeRect(x-w/2, yQ3, w, yQ1-yQ3);
+      ctx2.restore();
+    });
+  };
+  state.chartInstance.options.animation = { onComplete: drawWhiskers };
+  state.chartInstance.update();
+}
+
+function renderRadar(cw) {
+  const axesRaw = (document.getElementById('dp-axes')||{}).value||'';
+  const radarRaw = (document.getElementById('dp-radar')||{}).value||'';
+  const axes = axesRaw.split(',').map(s=>s.trim());
+  const colors = getColors(10);
+  const datasets = radarRaw.split('\n').filter(Boolean).map((row,i) => {
+    const [label, valsStr] = row.split(':');
+    const vals = (valsStr||'').split(',').map(v=>parseFloat(v.trim())||0);
+    return { label:label.trim(), data:vals, borderColor:colors[i], backgroundColor:hexToRgba(colors[i],0.15), pointBackgroundColor:colors[i] };
+  });
+  const ctx = makeCanvas(cw,380);
+  state.chartInstance = new Chart(ctx, {
+    type:'radar',
+    data:{ labels:axes, datasets },
+    options:{ responsive:true, plugins:{...CHART_DEFAULTS.plugins},
+      scales:{ r:{ grid:{color:'rgba(201,168,76,0.12)'}, pointLabels:{color:'#e8e4d8',font:{size:11}}, ticks:{color:'rgba(232,228,216,0.5)',backdropColor:'transparent'} } } }
+  });
+}
+
+function renderWaterfall(cw) {
+  const {labels, values} = getRows();
+  const colors = getColors(3);
+  let running = 0;
+  const bases=[], heights=[], bgs=[];
+  values.forEach(v => {
+    if(v>=0) { bases.push(running); heights.push(v); bgs.push(hexToRgba(colors[2],0.8)); }
+    else { bases.push(running+v); heights.push(-v); bgs.push(hexToRgba(colors[0],0.8)); }
+    running+=v;
+  });
+  const ctx = makeCanvas(cw);
+  state.chartInstance = new Chart(ctx, {
+    type:'bar',
+    data:{ labels, datasets:[
+      { label:'Base', data:bases, backgroundColor:'transparent', borderWidth:0, stack:'wf' },
+      { label:'Value', data:heights, backgroundColor:bgs, borderColor:bgs.map(c=>c.replace(/[\d.]+\)$/,'1)')), borderWidth:1.5, borderRadius:3, stack:'wf' }
+    ]},
+    options:{ responsive:true, ...CHART_DEFAULTS, plugins:{...CHART_DEFAULTS.plugins},
+      scales:{...CHART_DEFAULTS.scales, x:{...CHART_DEFAULTS.scales.x, stacked:true}, y:{...CHART_DEFAULTS.scales.y, stacked:true}} }
+  });
+}
+
+function renderTreemap(cw) {
+  const raw = (document.getElementById('dp-tree')||{}).value||'';
+  const items = raw.split('\n').filter(Boolean).map(r=>{ const p=r.split(','); return {name:(p[0]||'').trim(), value:parseFloat(p[1])||0}; });
+  const total = items.reduce((s,i)=>s+i.value,0);
+  const colors = getColors(items.length);
+  cw.style.minHeight='400px';
+  cw.innerHTML='<div id="treemap-svg" style="width:100%;height:400px;"></div>';
+  const W=cw.offsetWidth||600, H=400;
+  const svg = d3.select('#treemap-svg').append('svg').attr('width',W).attr('height',H);
+  const root = d3.hierarchy({children:items}).sum(d=>d.value);
+  d3.treemap().size([W,H]).padding(3)(root);
+  const g = svg.selectAll('g').data(root.leaves()).enter().append('g').attr('transform',d=>`translate(${d.x0},${d.y0})`);
+  g.append('rect').attr('width',d=>d.x1-d.x0).attr('height',d=>d.y1-d.y0)
+    .attr('fill',(_,i)=>colors[i%colors.length]).attr('rx',4).attr('opacity',0.85);
+  g.append('text').attr('x',6).attr('y',18).attr('fill','#fff').attr('font-size','12px').attr('font-family','Inter')
+    .text(d=>d.data.name).each(function(d){ const w=d.x1-d.x0; if(this.getBBox().width>w-8) d3.select(this).text(d.data.name.slice(0,Math.floor(w/8))); });
+  g.append('text').attr('x',6).attr('y',34).attr('fill','rgba(255,255,255,0.7)').attr('font-size','10px').attr('font-family','JetBrains Mono')
+    .text(d=>`${((d.data.value/total)*100).toFixed(1)}%`);
+}
+
+function renderFunnel(cw) {
+  const {labels, values} = getRows();
+  const colors = getColors(labels.length);
+  const max = Math.max(...values);
+  cw.style.minHeight='360px';
+  cw.innerHTML='<div id="funnel-svg" style="width:100%;height:360px;"></div>';
+  const W=cw.offsetWidth||600, H=360, n=labels.length, bh=H/n-6;
+  const svg = d3.select('#funnel-svg').append('svg').attr('width',W).attr('height',H);
+  labels.forEach((label,i) => {
+    const bw = (values[i]/max)*(W*0.7), x=(W-bw)/2, y=i*(bh+6);
+    svg.append('rect').attr('x',x).attr('y',y).attr('width',bw).attr('height',bh).attr('rx',4).attr('fill',colors[i%colors.length]).attr('opacity',0.85);
+    svg.append('text').attr('x',W/2).attr('y',y+bh/2+5).attr('text-anchor','middle').attr('fill','#fff').attr('font-size','13px').attr('font-weight','500').attr('font-family','Inter').text(`${label} — ${values[i].toLocaleString()}`);
+  });
+}
+
+function renderGantt(cw) {
+  const raw = (document.getElementById('dp-gantt')||{}).value||'';
+  const tasks = raw.split('\n').filter(Boolean).map(r=>{ const p=r.split(','); return {name:(p[0]||'').trim(), start:parseFloat(p[1])||0, end:parseFloat(p[2])||1}; });
+  const maxDay = Math.max(...tasks.map(t=>t.end));
+  const colors = getColors(tasks.length);
+  cw.style.minHeight=`${Math.max(300, tasks.length*44+40)}px`;
+  cw.innerHTML=`<div id="gantt-svg"></div>`;
+  const W=cw.offsetWidth||700, H=tasks.length*44+50, barH=28, margin={left:160,top:30,right:20,bottom:20};
+  const innerW=W-margin.left-margin.right;
+  const svg = d3.select('#gantt-svg').append('svg').attr('width',W).attr('height',H);
+  const xScale = d3.scaleLinear().domain([0,maxDay]).range([0,innerW]);
+
+  // Grid
+  for(let d=0;d<=maxDay;d+=Math.ceil(maxDay/10)) {
+    svg.append('line').attr('x1',margin.left+xScale(d)).attr('y1',margin.top-10).attr('x2',margin.left+xScale(d)).attr('y2',H-margin.bottom).attr('stroke','rgba(201,168,76,0.1)').attr('stroke-dasharray','4,4');
+    svg.append('text').attr('x',margin.left+xScale(d)).attr('y',margin.top-14).attr('text-anchor','middle').attr('fill','rgba(232,228,216,0.4)').attr('font-size','10px').text(`Day ${d}`);
+  }
+
+  tasks.forEach((t,i) => {
+    const y = margin.top + i*44;
+    // Label
+    svg.append('text').attr('x',margin.left-8).attr('y',y+barH/2+4).attr('text-anchor','end').attr('fill','#e8e4d8').attr('font-size','12px').attr('font-family','Inter').text(t.name);
+    // Bar
+    svg.append('rect').attr('x',margin.left+xScale(t.start)).attr('y',y).attr('width',xScale(t.end-t.start)).attr('height',barH).attr('rx',5).attr('fill',colors[i%colors.length]).attr('opacity',0.82);
+    svg.append('text').attr('x',margin.left+xScale(t.start)+6).attr('y',y+barH/2+4).attr('fill','rgba(0,0,0,0.8)').attr('font-size','11px').attr('font-weight','600').text(`${t.end-t.start}d`);
+  });
+}
+
+function renderHeatmap(cw) {
+  const rowsRaw = (document.getElementById('dp-rows')||{}).value||'';
+  const colsRaw = (document.getElementById('dp-cols')||{}).value||'';
+  const heatRaw = (document.getElementById('dp-heat')||{}).value||'';
+  const rows = rowsRaw.split(',').map(s=>s.trim());
+  const cols = colsRaw.split(',').map(s=>s.trim());
+  const grid = heatRaw.split('\n').map(r=>r.split(',').map(v=>parseFloat(v.trim())||0));
+  const allVals = grid.flat(), minV=Math.min(...allVals), maxV=Math.max(...allVals);
+  const W=cw.offsetWidth||700, cellW=Math.max(40,(W-120)/cols.length), cellH=40, H=rows.length*cellH+60;
+  cw.innerHTML=`<div id="heat-svg"></div>`;
+  const svg = d3.select('#heat-svg').append('svg').attr('width',W).attr('height',H+40);
+  const colors = getColors(1);
+  const colorScale = d3.scaleSequential().domain([minV,maxV]).interpolator(d3.interpolateRgb('#0a0e1a',colors[0]));
+
+  // Col headers
+  cols.forEach((c,j) => svg.append('text').attr('x',120+j*cellW+cellW/2).attr('y',20).attr('text-anchor','middle').attr('fill','rgba(232,228,216,0.5)').attr('font-size','11px').text(c));
+
+  rows.forEach((r,i) => {
+    svg.append('text').attr('x',114).attr('y',40+i*cellH+cellH/2+4).attr('text-anchor','end').attr('fill','#e8e4d8').attr('font-size','12px').text(r);
+    (grid[i]||[]).forEach((val,j) => {
+      svg.append('rect').attr('x',120+j*cellW).attr('y',30+i*cellH).attr('width',cellW-2).attr('height',cellH-2).attr('rx',3).attr('fill',colorScale(val)).attr('opacity',0.9);
+      svg.append('text').attr('x',120+j*cellW+cellW/2).attr('y',30+i*cellH+cellH/2+4).attr('text-anchor','middle').attr('fill','rgba(255,255,255,0.8)').attr('font-size','10px').text(val);
+    });
+  });
+}
+
+function renderChoropleth(cw) {
+  const raw = (document.getElementById('dp-choropleth')||{}).value||'';
+  const valLabel = (document.getElementById('dp-val-label')||{}).value||'Value';
+  const dataMap = {};
+  raw.split('\n').filter(Boolean).forEach(r=>{ const p=r.split(','); dataMap[(p[0]||'').trim().toUpperCase()]=(parseFloat(p[1])||0); });
+  const vals = Object.values(dataMap), minV=Math.min(...vals), maxV=Math.max(...vals);
+  const colors = SCHEMES[state.scheme];
+
+  cw.innerHTML=`<div style="padding:16px;background:rgba(10,14,26,0.5);border-radius:8px;border:1px solid var(--border);">
+    <p style="color:var(--muted);font-size:0.78rem;margin-bottom:12px;">🗺 Choropleth data loaded. Showing data table (full SVG world map requires TopoJSON — below is your data overview):</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+    ${Object.entries(dataMap).map(([cc,v])=>{
+      const pct=(v-minV)/(maxV-minV||1);
+      const col=colors[Math.floor(pct*(colors.length-1))];
+      return `<div style="padding:8px 14px;background:${col}22;border:1px solid ${col}44;border-radius:6px;text-align:center;">
+        <div style="font-weight:700;font-size:1rem;color:${col}">${cc}</div>
+        <div style="font-size:0.72rem;color:var(--muted)">${valLabel}: ${v}</div>
+      </div>`;
+    }).join('')}
+    </div>
+    <div style="margin-top:16px;display:flex;gap:0;height:12px;border-radius:6px;overflow:hidden;width:100%">
+    ${colors.map(c=>`<div style="flex:1;background:${c}"></div>`).join('')}
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:0.7rem;color:var(--muted);margin-top:4px;"><span>${minV}</span><span style="color:var(--gold)">${valLabel} Range</span><span>${maxV}</span></div>
+  </div>`;
+}
+
+function renderSankey(cw) {
+  const raw = (document.getElementById('dp-sankey')||{}).value||'';
+  const flows = raw.split('\n').filter(Boolean).map(r=>{ const p=r.split(','); return {source:(p[0]||'').trim(), target:(p[1]||'').trim(), value:parseFloat(p[2])||0}; });
+
+  // Build node list
+  const nodeSet = new Set();
+  flows.forEach(f=>{ nodeSet.add(f.source); nodeSet.add(f.target); });
+  const nodes = [...nodeSet];
+  const nodeIndex = {};
+  nodes.forEach((n,i)=>nodeIndex[n]=i);
+
+  const W = cw.offsetWidth||700, H=Math.max(420, nodes.length*28);
+  cw.innerHTML=`<div id="sankey-svg"></div>`;
+  const svg = d3.select('#sankey-svg').append('svg').attr('width',W).attr('height',H);
+
+  const colors = getColors(nodes.length);
+  const nodeW=20, padY=8;
+
+  // Determine columns (topological)
+  const colMap={};
+  const inNodes = new Set(flows.map(f=>f.target));
+  const outNodes = new Set(flows.map(f=>f.source));
+  nodes.forEach(n=>{ if(!inNodes.has(n)) colMap[n]=0; });
+  let changed=true;
+  while(changed) {
+    changed=false;
+    flows.forEach(f=>{ if(colMap[f.source]!==undefined && colMap[f.target]===undefined) { colMap[f.target]=(colMap[f.source]||0)+1; changed=true; } });
+  }
+  nodes.forEach(n=>{ if(colMap[n]===undefined) colMap[n]=1; });
+
+  const maxCol = Math.max(...Object.values(colMap));
+  const colNodes={};
+  nodes.forEach(n=>{ const c=colMap[n]; if(!colNodes[c]) colNodes[c]=[]; colNodes[c].push(n); });
+
+  // Max value per node for height
+  const nodeVals={};
+  flows.forEach(f=>{
+    nodeVals[f.source]=(nodeVals[f.source]||0)+f.value;
+    nodeVals[f.target]=(nodeVals[f.target]||0)+f.value;
+  });
+  const maxVal=Math.max(...Object.values(nodeVals));
+  const totalH=H-40;
+
+  // Position nodes
+  const nodePos={};
+  Object.entries(colNodes).forEach(([col,ns])=>{
+    const x=40+parseInt(col)*(W-80)/Math.max(maxCol,1);
+    let y=20;
+    ns.forEach(n=>{
+      const h=Math.max(20,(nodeVals[n]||1)/maxVal*totalH*0.85);
+      nodePos[n]={x,y,h,w:nodeW,color:colors[nodeIndex[n]%colors.length]};
+      y+=h+padY*3;
+    });
+  });
+
+  // Draw flows
+  flows.forEach(f=>{
+    const s=nodePos[f.source], t=nodePos[f.target];
+    if(!s||!t) return;
+    const sw=Math.max(2,(f.value/maxVal)*60);
+    const mx=(s.x+nodeW+t.x)/2;
+    svg.append('path')
+      .attr('d',`M${s.x+nodeW},${s.y+s.h/2} C${mx},${s.y+s.h/2} ${mx},${t.y+t.h/2} ${t.x},${t.y+t.h/2}`)
+      .attr('stroke',s.color).attr('stroke-width',sw).attr('fill','none').attr('opacity',0.35);
+  });
+
+  // Draw nodes & labels
+  Object.entries(nodePos).forEach(([name,p])=>{
+    svg.append('rect').attr('x',p.x).attr('y',p.y).attr('width',p.w).attr('height',p.h).attr('rx',3).attr('fill',p.color);
+    const onLeft = colMap[name]===0;
+    svg.append('text')
+      .attr('x', onLeft ? p.x-6 : p.x+nodeW+6)
+      .attr('y', p.y+p.h/2+4)
+      .attr('text-anchor', onLeft?'end':'start')
+      .attr('fill','#e8e4d8').attr('font-size','11px').attr('font-family','Inter')
+      .text(name.length>18?name.slice(0,16)+'…':name);
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  3D CHART RENDERERS (Three.js)
+// ═══════════════════════════════════════════════
+function makeThreeScene(cw) {
+  cw.innerHTML = `<div class="three-canvas" id="three-mount"></div>`;
+  const mount = document.getElementById('three-mount');
+  const W = mount.clientWidth||700, H = mount.clientHeight||460;
+  const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+  renderer.setSize(W,H); renderer.setClearColor(0x0f1629,1); renderer.shadowMap.enabled=true;
+  mount.appendChild(renderer.domElement);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45,W/H,0.1,1000);
+  camera.position.set(8,6,10); camera.lookAt(0,0,0);
+
+  // Lights
+  scene.add(new THREE.AmbientLight(0xffffff,0.5));
+  const dl = new THREE.DirectionalLight(0xffffff,0.8); dl.position.set(10,15,10); scene.add(dl);
+  const pl = new THREE.PointLight(0xc9a84c,0.4,50); pl.position.set(-5,8,-5); scene.add(pl);
+
+  // Grid helper
+  const grid = new THREE.GridHelper(20,20,0x1a2540,0x1a2540); scene.add(grid);
+
+  // Mouse rotate
+  let isDragging=false, prevX=0, prevY=0;
+  const el=renderer.domElement;
+  el.addEventListener('mousedown',e=>{isDragging=true;prevX=e.clientX;prevY=e.clientY;});
+  document.addEventListener('mouseup',()=>isDragging=false);
+  document.addEventListener('mousemove',e=>{
+    if(!isDragging) return;
+    const dx=e.clientX-prevX, dy=e.clientY-prevY;
+    scene.rotation.y+=dx*0.01; scene.rotation.x+=dy*0.01;
+    prevX=e.clientX; prevY=e.clientY;
+  });
+  el.addEventListener('wheel',e=>{ camera.position.multiplyScalar(e.deltaY>0?1.1:0.9); });
+
+  state.threeRenderer = renderer;
+  return {scene, camera, renderer};
+}
+
+function animateThree(scene, camera, renderer) {
+  if(state.threeAnimId) cancelAnimationFrame(state.threeAnimId);
+  const loop = () => {
+    state.threeAnimId = requestAnimationFrame(loop);
+    scene.rotation.y += 0.003;
+    renderer.render(scene, camera);
+  };
+  loop();
+}
+
+function hexToThreeColor(hex) { return new THREE.Color(hex); }
+
+function render3DBar(cw) {
+  const {labels, values} = getRows();
+  const colors = getColors(values.length);
+  const {scene, camera, renderer} = makeThreeScene(cw);
+  const maxV = Math.max(...values)||1;
+  values.forEach((v,i) => {
+    const h = (v/maxV)*5, x=(i-(values.length-1)/2)*1.6;
+    const geo = new THREE.BoxGeometry(1,h,1);
+    const mat = new THREE.MeshPhongMaterial({ color:hexToThreeColor(colors[i%colors.length]), shininess:60 });
+    const mesh = new THREE.Mesh(geo,mat);
+    mesh.position.set(x,h/2,0); mesh.castShadow=true; scene.add(mesh);
+  });
+  camera.position.set(values.length*0.9,5,values.length*1.2); camera.lookAt(0,2,0);
+  animateThree(scene,camera,renderer);
+  cw.querySelector('.three-canvas').insertAdjacentHTML('beforeend','<div style="text-align:center;font-size:0.72rem;color:var(--muted);margin-top:8px;">🖱 Drag to rotate · Scroll to zoom</div>');
+}
+
+function render3DPie(cw) {
+  const {labels, values} = getRows();
+  const colors = getColors(values.length);
+  const total = values.reduce((a,b)=>a+b,0);
+  const {scene, camera, renderer} = makeThreeScene(cw);
+  let angle=0;
+  values.forEach((v,i) => {
+    const sweep=(v/total)*Math.PI*2;
+    const shape = new THREE.Shape();
+    shape.moveTo(0,0);
+    for(let a=0;a<=sweep;a+=0.05) shape.lineTo(Math.cos(angle+a)*3, Math.sin(angle+a)*3);
+    shape.lineTo(0,0);
+    const extSettings = { depth: 0.6+i*0.05, bevelEnabled:true, bevelThickness:0.05, bevelSize:0.02 };
+    const geo = new THREE.ExtrudeGeometry(shape, extSettings);
+    const mat = new THREE.MeshPhongMaterial({ color:hexToThreeColor(colors[i%colors.length]), shininess:80 });
+    const mesh = new THREE.Mesh(geo,mat);
+    mesh.rotation.x=-Math.PI/2;
+    const explode=0.3; mesh.position.set(Math.cos(angle+sweep/2)*explode, 0, Math.sin(angle+sweep/2)*explode);
+    scene.add(mesh); angle+=sweep;
+  });
+  camera.position.set(0,8,8); camera.lookAt(0,0,0);
+  animateThree(scene,camera,renderer);
+}
+
+function render3DRibbon(cw) {
+  const {labels, values} = getRows();
+  const colors = getColors(values.length);
+  const {scene, camera, renderer} = makeThreeScene(cw);
+  const maxV=Math.max(...values)||1;
+  values.forEach((v,i)=>{
+    if(i===0) return;
+    const x1=(i-1-(values.length-1)/2)*1.6, x2=(i-(values.length-1)/2)*1.6;
+    const y1=(values[i-1]/maxV)*4, y2=(v/maxV)*4;
+    const shape = new THREE.Shape();
+    shape.moveTo(x1,0); shape.lineTo(x1,y1); shape.lineTo(x2,y2); shape.lineTo(x2,0); shape.closePath();
+    const geo = new THREE.ExtrudeGeometry(shape,{depth:0.8,bevelEnabled:false});
+    const mat = new THREE.MeshPhongMaterial({color:hexToThreeColor(colors[i%colors.length]),transparent:true,opacity:0.85,shininess:60});
+    scene.add(new THREE.Mesh(geo,mat));
+  });
+  camera.position.set(values.length*1,5,values.length*1.3); camera.lookAt(0,2,0);
+  animateThree(scene,camera,renderer);
+}
+
+function render3DScatter(cw) {
+  const raw = (document.getElementById('dp-xyz')||{}).value||'';
+  const points = raw.split('\n').filter(Boolean).map(r=>{ const p=r.split(','); return {x:parseFloat(p[0])||0,y:parseFloat(p[1])||0,z:parseFloat(p[2])||0}; });
+  const colors = getColors(points.length);
+  const {scene, camera, renderer} = makeThreeScene(cw);
+  points.forEach((p,i)=>{
+    const geo = new THREE.SphereGeometry(0.18,12,12);
+    const mat = new THREE.MeshPhongMaterial({color:hexToThreeColor(colors[i%colors.length]),shininess:80});
+    const mesh = new THREE.Mesh(geo,mat);
+    mesh.position.set(p.x/2-3, p.y/2-3, p.z/2-3); scene.add(mesh);
+  });
+  camera.position.set(8,6,10); camera.lookAt(0,0,0);
+  animateThree(scene,camera,renderer);
+}
+
+function render3DSurface(cw, wireframe=false) {
+  const fnStr = (document.getElementById('dp-fn')||{}).value || 'Math.sin(x)*Math.cos(y)*2';
+  const res = parseInt((document.getElementById('dp-res')||{}).value)||25;
+  const rangeStr = (document.getElementById('dp-range')||{}).value||'-3,3';
+  const [rMin,rMax] = rangeStr.split(',').map(v=>parseFloat(v.trim())||3);
+  const fn = new Function('x','y',`try{return ${fnStr}}catch(e){return 0}`);
+  const {scene,camera,renderer} = makeThreeScene(cw);
+  const geo = new THREE.PlaneGeometry(8,8,res,res);
+  const pos = geo.attributes.position;
+  const colors = getColors(5);
+  for(let i=0;i<pos.count;i++){
+    const x=pos.getX(i)/(4)*(rMax-rMin)/2, y=pos.getY(i)/(4)*(rMax-rMin)/2;
+    pos.setZ(i, fn(x,y));
+  }
+  geo.computeVertexNormals();
+  const mat = wireframe
+    ? new THREE.MeshBasicMaterial({color:hexToThreeColor(colors[0]),wireframe:true,opacity:0.7,transparent:true})
+    : new THREE.MeshPhongMaterial({color:hexToThreeColor(colors[0]),side:THREE.DoubleSide,shininess:60,specular:hexToThreeColor(colors[1])});
+  const mesh = new THREE.Mesh(geo,mat);
+  mesh.rotation.x=-Math.PI/2; scene.add(mesh);
+  camera.position.set(0,10,12); camera.lookAt(0,0,0);
+  animateThree(scene,camera,renderer);
+}
+
+function render3DWireframe(cw) { render3DSurface(cw,true); }
+
+function render3DWaterfall(cw) {
+  const {labels, values} = getRows();
+  const colors = getColors(3);
+  const {scene,camera,renderer} = makeThreeScene(cw);
+  const maxV=Math.max(...values.map(Math.abs))||1;
+  let running=0;
+  values.forEach((v,i)=>{
+    const h=Math.abs(v)/maxV*4, x=(i-(values.length-1)/2)*1.8;
+    const base = v>=0?running:running+v;
+    const geo = new THREE.BoxGeometry(1.2,h,0.8);
+    const mat = new THREE.MeshPhongMaterial({color:hexToThreeColor(v>=0?colors[2]:colors[0]),shininess:60});
+    const mesh = new THREE.Mesh(geo,mat);
+    mesh.position.set(x, base/maxV*4+h/2, 0); scene.add(mesh); running+=v;
+  });
+  camera.position.set(values.length*1,5,values.length*1.3); camera.lookAt(0,2,0);
+  animateThree(scene,camera,renderer);
+}
+
+function render3DBubble(cw) {
+  const raw = (document.getElementById('dp-xyz')||{}).value||'';
+  const points = raw.split('\n').filter(Boolean).map(r=>{ const p=r.split(','); return {x:parseFloat(p[0])||0,y:parseFloat(p[1])||0,r:Math.max(0.1,(parseFloat(p[2])||5)/20)}; });
+  const colors = getColors(points.length);
+  const {scene,camera,renderer} = makeThreeScene(cw);
+  points.forEach((p,i)=>{
+    const geo = new THREE.SphereGeometry(p.r,16,16);
+    const mat = new THREE.MeshPhongMaterial({color:hexToThreeColor(colors[i%colors.length]),transparent:true,opacity:0.75,shininess:80});
+    const mesh = new THREE.Mesh(geo,mat);
+    mesh.position.set(p.x/4-4,p.y/4-2,Math.random()*4-2); scene.add(mesh);
+  });
+  camera.position.set(8,6,12); camera.lookAt(0,0,0);
+  animateThree(scene,camera,renderer);
+}
+
+function render3DGlobe(cw) {
+  const raw = (document.getElementById('dp-globe')||{}).value||'';
+  const points = raw.split('\n').filter(Boolean).map(r=>{ const p=r.split(','); return {lat:parseFloat(p[0])||0,lon:parseFloat(p[1])||0,label:(p[2]||'').trim(),value:parseFloat(p[3])||50}; });
+  const {scene,camera,renderer} = makeThreeScene(cw);
+  const R=4;
+
+  // Globe sphere
+  const geo = new THREE.SphereGeometry(R,64,64);
+  const mat = new THREE.MeshPhongMaterial({color:0x0a1628,emissive:0x050d1f,wireframe:false,shininess:20});
+  scene.add(new THREE.Mesh(geo,mat));
+
+  // Wireframe overlay
+  const wf = new THREE.Mesh(new THREE.SphereGeometry(R+0.01,32,32), new THREE.MeshBasicMaterial({color:0x1a2d5a,wireframe:true,opacity:0.2,transparent:true}));
+  scene.add(wf);
+
+  const colors = getColors(points.length);
+  points.forEach((p,i)=>{
+    const phi=((90-p.lat)/180)*Math.PI, theta=((p.lon+180)/360)*Math.PI*2;
+    const x=R*Math.sin(phi)*Math.cos(theta), y=R*Math.cos(phi), z=R*Math.sin(phi)*Math.sin(theta);
+    const size=Math.max(0.08,(p.value/100)*0.25);
+    const dot = new THREE.Mesh(new THREE.SphereGeometry(size,10,10), new THREE.MeshBasicMaterial({color:hexToThreeColor(colors[i%colors.length])}));
+    dot.position.set(x,y,z); scene.add(dot);
+
+    // Pulse ring
+    const ring = new THREE.Mesh(new THREE.RingGeometry(size+0.02,size+0.06,16), new THREE.MeshBasicMaterial({color:hexToThreeColor(colors[i%colors.length]),transparent:true,opacity:0.4,side:THREE.DoubleSide}));
+    ring.position.set(x,y,z); ring.lookAt(new THREE.Vector3(0,0,0)); scene.add(ring);
+  });
+
+  const gl = new THREE.PointLight(0xc9a84c,0.8,50); gl.position.set(8,8,8); scene.add(gl);
+  camera.position.set(0,0,10); camera.lookAt(0,0,0);
+  animateThree(scene,camera,renderer);
+  cw.querySelector('.three-canvas').insertAdjacentHTML('beforeend','<div style="text-align:center;font-size:0.72rem;color:var(--muted);margin-top:8px;">🌐 Drag to rotate the globe · Scroll to zoom</div>');
+}
+
+// ═══════════════════════════════════════════════
+//  PDF EXPORT
+// ═══════════════════════════════════════════════
+async function exportPDF() {
+  const target = document.getElementById('export-target');
+  if(!target) { toast('Generate a chart first'); return; }
+  toast('⏳ Generating PDF...');
+
+  try {
+    // Stop 3D animation for capture
+    if(state.threeAnimId) cancelAnimationFrame(state.threeAnimId);
+
+    const canvas = await html2canvas(target, { backgroundColor:'#0f1629', scale:2, logging:false, useCORS:true });
+    const imgData = canvas.toDataURL('image/png');
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
+    const pdfW=pdf.internal.pageSize.getWidth(), pdfH=pdf.internal.pageSize.getHeight();
+    const iW=canvas.width, iH=canvas.height;
+    const ratio=Math.min((pdfW-20)/(iW/2*0.264583), (pdfH-30)/(iH/2*0.264583));
+    const mW=iW/2*0.264583*ratio, mH=iH/2*0.264583*ratio;
+    const mX=(pdfW-mW)/2, mY=(pdfH-mH)/2;
+
+    // Luxury header
+    pdf.setFillColor(10,14,26); pdf.rect(0,0,pdfW,pdfH,'F');
+    pdf.setDrawColor(201,168,76); pdf.setLineWidth(0.4);
+    pdf.rect(5,5,pdfW-10,pdfH-10);
+    pdf.rect(7,7,pdfW-14,pdfH-14);
+
+    const chartTitle = document.querySelector('#export-target h3')?.textContent||'DataViz Studio';
+    pdf.setTextColor(201,168,76); pdf.setFontSize(10);
+    pdf.setFont('helvetica','bold'); pdf.text(chartTitle, 14, 14);
+    pdf.setTextColor(150,130,80); pdf.setFontSize(7);
+    pdf.setFont('helvetica','normal'); pdf.text('DataViz Studio — By Aryan · @EPureNest', pdfW-14, 14, {align:'right'});
+    pdf.setTextColor(100,90,60); pdf.text(`Generated: ${new Date().toLocaleString()}`, pdfW-14, 19, {align:'right'});
+
+    pdf.addImage(imgData,'PNG', mX, mY, mW, mH);
+
+    // Footer
+    pdf.setDrawColor(201,168,76); pdf.setLineWidth(0.2);
+    pdf.line(14,pdfH-12,pdfW-14,pdfH-12);
+    pdf.setTextColor(80,70,50); pdf.setFontSize(6);
+    pdf.text('CONFIDENTIAL · DataViz Studio · Powered by Chart.js, Three.js & D3.js',pdfW/2,pdfH-8,{align:'center'});
+
+    pdf.save(`DataViz_${chartTitle.replace(/[^a-z0-9]/gi,'_')}_${Date.now()}.pdf`);
+    toast('✦ PDF exported successfully');
+
+    // Resume 3D
+    if(state.threeRenderer && state.threeAnimId===null) animateThree(state.threeRenderer._scene, state.threeRenderer._camera, state.threeRenderer);
+  } catch(e) {
+    toast('Export error — try again'); console.error(e);
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 2800);
+}
+
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+buildSidebar();
+</script>
+</body>
+</html>
